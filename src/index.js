@@ -47,8 +47,10 @@ const reader = readline.createInterface({
 });
 
 
+let ERROR_MESSAGE = "";
+
 async function main(){
-    let menuState = 1;
+    let menuState = 100;
 
     const presentLogo = ()=>{
         console.log("========== MUSIKER ==========");
@@ -61,16 +63,70 @@ async function main(){
         console.log("2 - Baixar playlist.");
         console.log("3 - Sair.");
 
-        const option = await input();
-        if(Number(option) == 3){
+        const option = Number(await input());
+        if(option == 3){
             menuState = 0;
+        }else{
+            if(option > 0 && option < 3){
+                menuState = option;
+            }
         }
     };
 
 
+    const presentAppMenu = async (single)=>{
+        const header = (single)?"Insira a url da musica: ":"Insira a url da playlist: ";
+    
+        console.log(header);
+        console.log("0 - Voltar.");
+
+        const option = await input();
+        
+        if(Number.isSafeInteger(Number(option)) && option == 0){
+            menuState = 3;
+            return;
+        }
+
+        // tratar input como url
+        if(!ytdl.validateURL(option)){
+            ERROR_MESSAGE = "URL INVÁLIDA!: "+option;
+            return;
+        }
+
+        if(!single){
+            ERROR_MESSAGE = "SOB CONSTRUÇÃO...";
+            return;
+        }
+
+        ERROR_MESSAGE = "";
+        await downloadVideo(option);
+    }
+
+    const presentSingleMenu = async () =>{
+        return await presentAppMenu(true);
+    };
+
+
+    const presentPlaylistMenu = async () =>{
+        return await presentAppMenu(false);
+    };
+
     presentLogo();
     do{
-        await presentMainMenu();
+        console.clear();
+        console.log(ERROR_MESSAGE);
+        switch(menuState){
+            case 1:
+                await presentSingleMenu();
+                break;
+            case 2:
+                await presentPlaylistMenu();
+                break;
+            case 3:
+            default:
+                await presentMainMenu();
+                break;
+        }
     }while(menuState > 0);
 
     console.log("Programa finalizado.");
