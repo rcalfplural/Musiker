@@ -5,11 +5,10 @@ const readline = require("readline");
 
 /**
  * 
- * @param {string} url 
+ * @param {string} name 
  */
-async function loadInfo(url){
-    const videoInfo = await ytdl.getInfo(url);
-    console.log(videoInfo);
+function cleanFileName(name){
+    return name.trim().replaceAll(/[!@#$%^&*\-+=~`:;"',.<>/?\\|()\[\]{}]/g, "");
 }
 
 
@@ -18,18 +17,22 @@ async function loadInfo(url){
  * @param {string} url 
  */
 async function downloadVideo(url, index = -1){
-    const videoInfo = await ytdl.getInfo(url);
-    const { videoDetails } = videoInfo;
-    const message = `Carregando ${videoDetails.title}...`;
-    const fileName = `${(index>=0)?"["+index.toString().padStart(2,'0')+"]":""} ${videoDetails.title}`;
-
-    console.log(message);
-
-    const data = ytdl.downloadFromInfo(videoInfo, {
-        quality: "highestaudio",
-        format: "mp3"
-    });
-    data.pipe(fs.createWriteStream(`out/${fileName}.mp3`));
+    try{
+        const videoInfo = await ytdl.getInfo(url);
+        const { videoDetails } = videoInfo;
+        const message = `Baixando ${videoDetails.title}...`;
+        const fileName = `${(index>=0)?"["+index.toString().padStart(2,'0')+"]":""} ${videoDetails.title}`;
+    
+        console.log(message);
+    
+        const data = ytdl.downloadFromInfo(videoInfo, {
+            quality: "highestaudio",
+            format: "mp3"
+        });
+        data.pipe(fs.createWriteStream(`out/${cleanFileName(fileName)}.mp3`));
+    }catch(err){
+        throw err;
+    }
 }
 
 
@@ -60,7 +63,6 @@ async function main(){
     const presentMainMenu = async () =>{
         console.log("Insira o numero da opção desejada:");
         console.log("1 - Baixar música.");
-        console.log("2 - Baixar playlist.");
         console.log("3 - Sair.");
 
         const option = Number(await input());
@@ -94,7 +96,8 @@ async function main(){
         }
 
         if(!single){
-            ERROR_MESSAGE = "SOB CONSTRUÇÃO...";
+            // Playlists
+            ERROR_MESSAGE = "ESTA FUNCIONALIDADE NÃO ESTÃO DISPONÍVEIS";
             return;
         }
 
@@ -113,19 +116,21 @@ async function main(){
 
     presentLogo();
     do{
-        console.clear();
-        console.log(ERROR_MESSAGE);
-        switch(menuState){
-            case 1:
-                await presentSingleMenu();
-                break;
-            case 2:
-                await presentPlaylistMenu();
-                break;
-            case 3:
-            default:
-                await presentMainMenu();
-                break;
+        try{
+            // console.clear();
+            console.log(ERROR_MESSAGE);
+            switch(menuState){
+                case 1:
+                    await presentSingleMenu();
+                    break;
+                case 3:
+                default:
+                    await presentMainMenu();
+                    break;
+            }
+        }catch(err){
+            console.log("Error ocurried: ", err);
+            return;
         }
     }while(menuState > 0);
 

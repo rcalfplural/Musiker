@@ -1,2 +1,6 @@
 node_modules
 out/**
+Dist
+Dist.zip
+.env
+*.exe
